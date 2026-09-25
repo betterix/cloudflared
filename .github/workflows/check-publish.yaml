@@ -1,33 +1,47 @@
-name: Build and Push Docker Image
+name: Check, Build and Push Docker Image
 
 on:
-  workflow_run:
-    workflows:
-      - Check
-    types:
-      - completed
-
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/cloudflared
 
 jobs:
-  publish:
-    name: Build and Publish
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_branch == 'main'
-      )
+  check:
+    name: Check
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Install Go
+        uses: actions/setup-go@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          go-version: 1.27.1
+          cache: true
+
+      - name: Configure unprivileged ICMP
+        run: |
+          sudo sysctl -w net.ipv4.ping_group_range="0 2147483647"
+          sysctl net.ipv4.ping_group_range
+
+      - name: Test
+        run: make test
+
+  publish:
+    name: Build and Publish
+    needs: check
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
