@@ -112,8 +112,8 @@ func TestReadFromDstSessionPreventClosed(t *testing.T) {
 }
 
 func testActiveSessionNotClosed(t *testing.T, readFromDst bool, writeToDst bool) {
-	const closeAfterIdle = time.Second
-	const activeTime = time.Second * 3
+	const closeAfterIdle = time.Millisecond * 100
+	const activeTime = time.Millisecond * 500
 
 	sessionID := uuid.New()
 	cfdConn, originConn := net.Pipe()
@@ -145,7 +145,7 @@ func testActiveSessionNotClosed(t *testing.T, readFromDst bool, writeToDst bool)
 				if _, err := originConn.Write(payload); err != nil {
 					return err
 				}
-				time.Sleep(closeAfterIdle / 4)
+				time.Sleep(closeAfterIdle / 2)
 			}
 		})
 	}
@@ -173,7 +173,7 @@ func testActiveSessionNotClosed(t *testing.T, readFromDst bool, writeToDst bool)
 				if _, err := session.transportToDst(payload); err != nil {
 					return err
 				}
-				time.Sleep(closeAfterIdle / 4)
+				time.Sleep(closeAfterIdle / 2)
 			}
 		})
 	}

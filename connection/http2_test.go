@@ -526,7 +526,7 @@ func TestGracefulShutdownHTTP2(t *testing.T) {
 	cancel()
 	wg.Wait()
 
-	events.waitForEvent(t, Event{
+	events.assertSawEvent(t, Event{
 		Index:     http2Conn.connIndex,
 		EventType: Unregistering,
 	})

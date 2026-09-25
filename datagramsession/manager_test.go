@@ -3,7 +3,6 @@ package datagramsession
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -195,15 +194,8 @@ func TestManagerCtxDoneCloseSessions(t *testing.T) {
 	}()
 
 	closedByRemote, err := session.Serve(ctx, time.Minute)
+	require.False(t, closedByRemote)
 	require.Error(t, err)
-
-	if errors.Is(err, context.Canceled) {
-		require.False(t, closedByRemote)
-	} else {
-		var closeErr *errClosedSession
-		require.ErrorAs(t, err, &closeErr)
-		require.True(t, closedByRemote)
-	}
 
 	wg.Wait()
 }
@@ -238,11 +230,11 @@ func (mo *mockOrigin) serve() error {
 }
 
 func testPayload(sessionID uuid.UUID) []byte {
-	return fmt.Appendf(nil, "Message from %s", sessionID)
+	return []byte(fmt.Sprintf("Message from %s", sessionID))
 }
 
 func testResponse(msg []byte) []byte {
-	return fmt.Appendf(nil, "Response to %v", msg)
+	return []byte(fmt.Sprintf("Response to %v", msg))
 }
 
 type mockQUICTransport struct {
