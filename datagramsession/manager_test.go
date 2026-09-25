@@ -3,6 +3,7 @@ package datagramsession
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -194,8 +195,15 @@ func TestManagerCtxDoneCloseSessions(t *testing.T) {
 	}()
 
 	closedByRemote, err := session.Serve(ctx, time.Minute)
-	require.True(t, closedByRemote)
 	require.Error(t, err)
+
+	if errors.Is(err, context.Canceled) {
+		require.False(t, closedByRemote)
+	} else {
+		var closeErr *errClosedSession
+		require.ErrorAs(t, err, &closeErr)
+		require.True(t, closedByRemote)
+	}
 
 	wg.Wait()
 }
