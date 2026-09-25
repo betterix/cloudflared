@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
@@ -99,8 +100,18 @@ func (s *eventCollectorSink) OnTunnelEvent(event Event) {
 	s.observedEvents = append(s.observedEvents, event)
 }
 
-func (s *eventCollectorSink) assertSawEvent(t *testing.T, event Event) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	assert.Contains(t, s.observedEvents, event)
+func (s *eventCollectorSink) waitForEvent(t *testing.T, want Event) {
+	t.Helper()
+
+	require.Eventually(t, func() bool {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
+		for _, event := range s.observedEvents {
+			if reflect.DeepEqual(event, want) {
+				return true
+			}
+		}
+		return false
+	}, time.Second, 10*time.Millisecond)
 }
