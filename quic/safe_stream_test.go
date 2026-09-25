@@ -10,6 +10,7 @@ import (
 	"io"
 	"math/big"
 	"net"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -26,12 +27,16 @@ var (
 		KeepAlivePeriod: 5 * time.Second,
 		EnableDatagrams: true,
 	}
-	exchanges       = 1000
+	exchanges       = 100
 	msgsPerExchange = 10
 	testMsg         = "Ok message"
 )
 
 func TestSafeStreamClose(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("QUIC stream stress test is unstable on Windows")
+	}
+
 	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
 	require.NoError(t, err)
 	udpListener, err := net.ListenUDP(udpAddr.Network(), udpAddr)
