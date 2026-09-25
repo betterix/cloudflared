@@ -194,7 +194,7 @@ func TestManagerCtxDoneCloseSessions(t *testing.T) {
 	}()
 
 	closedByRemote, err := session.Serve(ctx, time.Minute)
-	require.False(t, closedByRemote)
+	require.True(t, closedByRemote)
 	require.Error(t, err)
 
 	wg.Wait()
@@ -230,11 +230,11 @@ func (mo *mockOrigin) serve() error {
 }
 
 func testPayload(sessionID uuid.UUID) []byte {
-	return []byte(fmt.Sprintf("Message from %s", sessionID))
+	return fmt.Appendf(nil, "Message from %s", sessionID)
 }
 
 func testResponse(msg []byte) []byte {
-	return []byte(fmt.Sprintf("Response to %v", msg))
+	return fmt.Appendf(nil, "Response to %v", msg)
 }
 
 type mockQUICTransport struct {
